@@ -13,7 +13,7 @@ var exec = require('child_process').exec
 var Q = require('q');
 
 var toKill = [];
-var numWindows = 1;
+var numWindows = 5;
 
 var count = Date.now()
 var config = {
@@ -87,7 +87,7 @@ Q.all([
 			killAll(result);
 			systemExit();
 		});
-	}, 1000);
+	}, 5000);
 }, function(err) {
 	console.log('error');
 });

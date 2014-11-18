@@ -4,7 +4,6 @@
   "description": "memory comparison app",
   "main": "index.js",
   "dependencies": {
-    "express": "^4.10.2",
     "q": "^1.1.1",
     "underscore": "^1.7.0"
   },
