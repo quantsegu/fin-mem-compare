@@ -13,7 +13,7 @@ var exec = require('child_process').exec
 var Q = require('q');
 
 var toKill = [];
-var numWindows = 5;
+var numWindows = 10;
 
 var count = Date.now()
 var config = {
@@ -77,8 +77,8 @@ var launchMany = function(count, cmd, pause) {
 }
 
 Q.all([
-	launchMany(numWindows, cefPath, 3000),
-	launchMany(numWindows, chromiumPath, 2000),
+	launchMany(numWindows, cefPath, 5000),
+	launchMany(numWindows, chromiumPath, 3000),
 	launchMany(numWindows, openfinPath, 10000)
 ]).then(function() {
 	setTimeout(function() {
@@ -92,40 +92,46 @@ Q.all([
 	console.log('error');
 });
 
+
 var fetchMemoryStats = function(handler) {
-	var results = [];
+	var output = [];
 	var spawn = require("child_process").spawn;
 	var child = spawn("powershell.exe",[dataCmd]);
 	child.stdout.on("data",function(data){
-		if (data[0] === 13) {
-			return; //skip the blank lines
-		}
 		var line = data.toString('utf8');
-		results.push(line);
+		output.push(line);
 	});
 	child.stderr.on("data",function(data){
 	    console.log("Powershell Errors: " + data);
 	});
 	child.on("exit",function(){
 	    console.log("Powershell Script finished");
-	    var objectsResults = [];
-	    var each = {};
-	    for (var i = 0; i < results.length; i++) {
-	    	var row = results[i];
-	    	var split = row.split(" ");
-	    	var key = split[0];
-	    	var value = split[split.length-1];
-	    	if (key === 'Id') {
-	    		each = {};
-	    		objectsResults.push(each);
-	    		each.id = value;	    	
-	    	}
-	    	else
+	    var everything = output.join("");
+	    var lines = everything.split('\r');
+	    //peel of the first \n character
+	    lines = lines.map(function(e) { return e.substring(1); } );
+	    var result = [];
+	    var msg = [];
+	    for (var i  = 0 ; i < lines.length; i++)
 	    	{
-	    		each[key.toLowerCase()] = value;
+	    		var each = lines[i].trim();
+	    		if (each.length > 0) {
+	    			var split = each.split(":");
+	    			var key = split[0].trim().toLowerCase();
+	    			var value = split[1].trim();
+	    			if (key === 'id') {
+	    				msg = {
+	    					id: value
+	    				}
+	    				result.push(msg);
+	    			}
+	    			else
+	    			{
+	    				msg[key] = value;
+	    			}
+	    		}
 	    	}
-	    }
-	    handler(objectsResults);
+	    handler(result);
 	});
 	child.stdin.end(); //end input
 }
